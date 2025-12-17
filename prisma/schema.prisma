@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model History {
+  id        Int      @id @default(autoincrement())
+  songId    String
+  name      String
+  artist    String
+  image     String
+  audioUrl  String
+  playedAt  DateTime @default(now())
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  songId    String   @unique
+  name      String
+  artist    String
+  image     String
+  audioUrl  String
+  addedAt   DateTime @default(now())
+}
