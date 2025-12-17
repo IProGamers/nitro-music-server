@@ -41,7 +41,7 @@
     "release": "bun run changelogen --release --push",
     "spell-check": "cspell .",
     "postinstall": "npx simple-git-hooks",
-    "build:netlify": "prisma generate && esbuild src/netlify.ts --bundle --outfile=netlify/functions/api.cjs --platform=node --target=node18 --format=cjs --external:node:* --external:@prisma/client"
+    "build:netlify": "prisma generate && esbuild src/netlify.ts --bundle --outfile=netlify/functions/api.js --platform=node --target=node20 --format=esm --external:node:* --external:@prisma/client"
   },
   "simple-git-hooks": {
     "pre-commit": "bun run lint && bun run format",
