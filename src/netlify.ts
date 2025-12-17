@@ -1,12 +1,9 @@
-import { Hono } from 'hono'
-import { handle } from 'hono/netlify'
+import serverless from 'serverless-http'
+import { getRequestListener } from '@hono/node-server'
 import app from './server'
 
-const proxy = new Hono()
+// Convert Hono app to a Node.js request listener
+const requestListener = getRequestListener(app.fetch)
 
-// Netlify Functions often route to /.netlify/functions/api
-// We mount the app there to ensure paths match
-proxy.route('/.netlify/functions/api', app)
-proxy.route('/', app)
-
-export const handler = handle(proxy)
+// Wrap with serverless-http to handle Netlify/Lambda events
+export const handler = serverless(requestListener)
