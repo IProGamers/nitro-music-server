@@ -41,7 +41,7 @@
     "release": "bun run changelogen --release --push",
     "spell-check": "cspell .",
     "postinstall": "npx simple-git-hooks",
-    "build:netlify": "esbuild src/netlify.ts --bundle --outfile=../netlify/functions/api.js --platform=node --target=node20 --format=esm --external:node:*"
+    "build:netlify": "esbuild src/netlify.ts --bundle --outfile=netlify/functions/api.js --platform=node --target=node20 --format=esm --external:node:*"
   },
   "simple-git-hooks": {
     "pre-commit": "bun run lint && bun run format",
