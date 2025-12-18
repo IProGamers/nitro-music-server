@@ -1,4 +1,4 @@
-import { AlbumController, ArtistController, SearchController, SongController, HistoryController, FavoritesController } from '#modules/index'
+import { AlbumController, ArtistController, SearchController, SongController, HistoryController, FavoritesController, ProfileController } from '#modules/index'
 import { PlaylistController } from '#modules/playlists/controllers'
 import { App } from './app'
 
@@ -9,7 +9,8 @@ const app = new App([
   new ArtistController(),
   new PlaylistController(),
   new HistoryController(),
-  new FavoritesController()
+  new FavoritesController(),
+  new ProfileController()
 ]).getApp()
 
 export default app

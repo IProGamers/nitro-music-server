@@ -4,15 +4,26 @@ const prisma = new PrismaClient()
 
 export class HistoryService {
     async getHistory() {
-        return await prisma.history.findMany({
-            orderBy: { playedAt: 'desc' },
-            take: 50
-        })
+        try {
+            return await prisma.history.findMany({
+                orderBy: { playedAt: 'desc' },
+                take: 50
+            })
+        } catch (error) {
+            console.error('Error fetching history:', error)
+            return []
+        }
     }
 
     async addHistory(data: { songId: string; name: string; artist: string; image: string; audioUrl: string }) {
-        return await prisma.history.create({
-            data
-        })
+        try {
+            return await prisma.history.create({
+                data
+            })
+        } catch (error) {
+            console.error('Error adding to history:', error)
+            throw error
+        }
     }
 }
+

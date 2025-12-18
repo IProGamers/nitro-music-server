@@ -4,9 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model History {
@@ -27,4 +26,14 @@ model Favorite {
   image     String
   audioUrl  String
   addedAt   DateTime @default(now())
+}
+
+model UserProfile {
+  id        Int      @id @default(1)
+  name      String   @default("Guest User")
+  bio       String   @default("Music enthusiast & audiophile. Exploring the universe of sound one track at a time.")
+  image     String?
+  tier      String   @default("NITRO_CORE")
+  isAdmin   Boolean  @default(false)
+  updatedAt DateTime @updatedAt
 }
