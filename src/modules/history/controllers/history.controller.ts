@@ -98,5 +98,33 @@ export class HistoryController implements Routes {
                 return ctx.json({ success: true, data: mappedResult })
             }
         )
+
+        this.controller.openapi(
+            createRoute({
+                method: 'delete',
+                path: '/history',
+                tags: ['History'],
+                summary: 'Clear history',
+                description: 'Clear all playback history.',
+                operationId: 'clearHistory',
+                responses: {
+                    200: {
+                        description: 'Successfully cleared history',
+                        content: {
+                            'application/json': {
+                                schema: z.object({
+                                    success: z.boolean(),
+                                    message: z.string()
+                                })
+                            }
+                        }
+                    }
+                }
+            }),
+            async (ctx) => {
+                await this.historyService.clearHistory()
+                return ctx.json({ success: true, message: 'History cleared successfully' })
+            }
+        )
     }
 }

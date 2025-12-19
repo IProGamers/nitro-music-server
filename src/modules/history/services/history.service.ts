@@ -25,5 +25,14 @@ export class HistoryService {
             throw error
         }
     }
+
+    async clearHistory() {
+        try {
+            return await prisma.history.deleteMany({})
+        } catch (error) {
+            console.error('Error clearing history:', error)
+            throw error
+        }
+    }
 }
 
