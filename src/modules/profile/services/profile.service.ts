@@ -17,33 +17,65 @@ export class ProfileService {
             })
         }
 
-        return profile
+        return profile as unknown as {
+            id: number
+            name: string
+            bio: string
+            image: string | null
+            tier: 'NITRO_CORE' | 'NITRO_ELITE' | 'NITRO_SUPREME'
+            isAdmin: boolean
+            updatedAt: Date
+        }
     }
 
     async updateProfile(data: { name?: string; bio?: string; image?: string | null }) {
         const profile = await this.getProfile()
 
-        return await prisma.userProfile.update({
+        return (await prisma.userProfile.update({
             where: { id: profile.id },
             data
-        })
+        })) as unknown as {
+            id: number
+            name: string
+            bio: string
+            image: string | null
+            tier: 'NITRO_CORE' | 'NITRO_ELITE' | 'NITRO_SUPREME'
+            isAdmin: boolean
+            updatedAt: Date
+        }
     }
 
     async updateTier(tier: 'NITRO_CORE' | 'NITRO_ELITE' | 'NITRO_SUPREME') {
         const profile = await this.getProfile()
 
-        return await prisma.userProfile.update({
+        return (await prisma.userProfile.update({
             where: { id: profile.id },
             data: { tier }
-        })
+        })) as unknown as {
+            id: number
+            name: string
+            bio: string
+            image: string | null
+            tier: 'NITRO_CORE' | 'NITRO_ELITE' | 'NITRO_SUPREME'
+            isAdmin: boolean
+            updatedAt: Date
+        }
     }
 
     async setAdmin(isAdmin: boolean) {
         const profile = await this.getProfile()
 
-        return await prisma.userProfile.update({
+        return (await prisma.userProfile.update({
             where: { id: profile.id },
             data: { isAdmin }
-        })
+        })) as unknown as {
+            id: number
+            name: string
+            bio: string
+            image: string | null
+            tier: 'NITRO_CORE' | 'NITRO_ELITE' | 'NITRO_SUPREME'
+            isAdmin: boolean
+            updatedAt: Date
+        }
     }
 }

@@ -19,7 +19,7 @@ export const createArtistPayload = (artist: z.infer<typeof ArtistAPIResponseMode
   isVerified: artist.isVerified || null,
   dominantLanguage: artist.dominantLanguage || null,
   dominantType: artist.dominantType || null,
-  bio: artist.bio ? JSON.parse(artist.bio) : null,
+  bio: typeof artist.bio === 'string' ? JSON.parse(artist.bio) : null,
   dob: artist.dob || null,
   fb: artist.fb || null,
   twitter: artist.twitter || null,
@@ -36,17 +36,18 @@ export const createArtistPayload = (artist: z.infer<typeof ArtistAPIResponseMode
       name: similarArtist.name,
       url: similarArtist.perma_url,
       image: createImageLinks(similarArtist.image_url),
-      languages: similarArtist.languages ? JSON.parse(similarArtist.languages) : null,
-      wiki: similarArtist.wiki,
-      dob: similarArtist.dob,
-      fb: similarArtist.fb,
-      twitter: similarArtist.twitter,
-      isRadioPresent: similarArtist.isRadioPresent,
-      type: similarArtist.type,
-      dominantType: similarArtist.dominantType,
-      aka: similarArtist.aka,
-      bio: similarArtist.bio ? JSON.parse(similarArtist.bio) : null,
-      similarArtists: similarArtist.similar ? JSON.parse(similarArtist.similar) : null
+      languages:
+        typeof similarArtist.languages === 'string' ? JSON.parse(similarArtist.languages) : null,
+      wiki: similarArtist.wiki || null,
+      dob: similarArtist.dob || null,
+      fb: similarArtist.fb || null,
+      twitter: similarArtist.twitter || null,
+      isRadioPresent: similarArtist.isRadioPresent || null,
+      type: similarArtist.type || null,
+      dominantType: similarArtist.dominantType || null,
+      aka: similarArtist.aka || null,
+      bio: typeof similarArtist.bio === 'string' ? JSON.parse(similarArtist.bio) : null,
+      similarArtists: typeof similarArtist.similar === 'string' ? JSON.parse(similarArtist.similar) : null
     })) || null
 })
 

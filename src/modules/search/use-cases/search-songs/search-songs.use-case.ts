@@ -12,7 +12,7 @@ export interface SearchSongsArgs {
 }
 
 export class SearchSongsUseCase implements IUseCase<SearchSongsArgs, z.infer<typeof SearchSongModel>> {
-  constructor() {}
+  constructor() { }
 
   async execute({ query, limit, page }: SearchSongsArgs): Promise<z.infer<typeof SearchSongModel>> {
     const { data } = await useFetch<z.infer<typeof SearchSongAPIResponseModel>>({

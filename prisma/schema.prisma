@@ -4,13 +4,13 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model History {
   id        Int      @id @default(autoincrement())
-  songId    String
+  songId    String   @unique
   name      String
   artist    String
   image     String

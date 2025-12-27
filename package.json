@@ -30,8 +30,9 @@
     "dev": "bun run --hot src/server.ts",
     "dev:node": "tsx src/local-node.ts",
     "start": "bun dist/server.js",
-    "prebuild": "rm -rf dist",
+    "prebuild": "npx -y rimraf dist",
     "build": "tsc && tsc-alias",
+    "vercel-build": "prisma generate && npm run build",
     "format": "prettier --write \"./**/*.{js,ts,json}\"",
     "lint": "eslint .",
     "lint:fix": "bun run lint --fix",
@@ -41,7 +42,7 @@
     "prerelease": "bun run test",
     "release": "bun run changelogen --release --push",
     "spell-check": "cspell .",
-    "postinstall": "npx simple-git-hooks",
+    "postinstall": "prisma generate",
     "build:netlify": "prisma generate && esbuild src/netlify.ts --bundle --outfile=netlify/functions/api.js --platform=node --target=node20 --format=esm --external:node:* --external:@prisma/client"
   },
   "simple-git-hooks": {

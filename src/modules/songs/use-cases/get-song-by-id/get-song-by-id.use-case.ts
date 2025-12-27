@@ -1,5 +1,6 @@
 import { Endpoints } from '#common/constants'
 import { useFetch } from '#common/helpers'
+import { ApiContextEnum } from '#common/enums'
 import { createSongPayload } from '#modules/songs/helpers'
 import { HTTPException } from 'hono/http-exception'
 import type { IUseCase } from '#common/types'
@@ -11,11 +12,12 @@ export interface GetSongByIdArgs {
 }
 
 export class GetSongByIdUseCase implements IUseCase<GetSongByIdArgs, z.infer<typeof SongModel>[]> {
-  constructor() {}
+  constructor() { }
 
   async execute({ songIds }: GetSongByIdArgs) {
     const { data } = await useFetch<{ songs: z.infer<typeof SongAPIResponseModel>[] }>({
       endpoint: Endpoints.songs.id,
+      context: ApiContextEnum.WEB6DOT0,
       params: {
         pids: songIds
       }

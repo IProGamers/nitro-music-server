@@ -17,8 +17,20 @@ export class HistoryService {
 
     async addHistory(data: { songId: string; name: string; artist: string; image: string; audioUrl: string }) {
         try {
-            return await prisma.history.create({
-                data
+            return await prisma.history.upsert({
+                where: { songId: data.songId },
+                update: {
+                    playedAt: new Date(),
+                    // Optionally update other details if they changed
+                    name: data.name,
+                    artist: data.artist,
+                    image: data.image,
+                    audioUrl: data.audioUrl
+                },
+                create: {
+                    ...data,
+                    playedAt: new Date()
+                }
             })
         } catch (error) {
             console.error('Error adding to history:', error)

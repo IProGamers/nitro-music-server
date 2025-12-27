@@ -21,7 +21,7 @@ export const useFetch = async <T>({ endpoint, params, context }: FetchParams): P
   url.searchParams.append('_format', 'json')
   url.searchParams.append('_marker', '0')
   url.searchParams.append('api_version', '4')
-  url.searchParams.append('ctx', context || 'web6dot0')
+  url.searchParams.append('ctx', context || 'android')
 
   Object.keys(params).forEach((key) => url.searchParams.append(key, String(params[key])))
 

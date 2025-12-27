@@ -66,16 +66,7 @@ export const createSearchPayload = (search: z.infer<typeof SearchAPIResponseMode
   },
 
   artists: {
-    results: search?.artists?.data.map((artist) => {
-      return {
-        id: artist?.id,
-        title: artist?.title,
-        image: createImageLinks(artist?.image),
-        type: artist?.type,
-        description: artist?.description,
-        position: artist?.position
-      }
-    }),
+    results: [],
     position: search?.artists?.position
   },
 
