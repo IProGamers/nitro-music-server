@@ -1,8 +1,9 @@
 import { AlbumController, ArtistController, SearchController, SongController, HistoryController, FavoritesController, ProfileController, ModuleController } from '#modules/index'
 import { PlaylistController } from '#modules/playlists/controllers'
 import { App } from './app'
+import { audioProxy } from './modules/audio-proxy/audio-proxy.route'
 
-const app = new App([
+const appInstance = new App([
   new SearchController(),
   new SongController(),
   new AlbumController(),
@@ -12,6 +13,12 @@ const app = new App([
   new FavoritesController(),
   new ProfileController(),
   new ModuleController()
-]).getApp()
+])
+
+const app = appInstance.getApp()
+
+// Add the audio proxy route for CORS-free downloads
+app.route('/api/audio', audioProxy)
 
 export default app
+
