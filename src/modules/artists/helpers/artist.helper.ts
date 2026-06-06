@@ -9,6 +9,21 @@ import type {
 } from '#modules/artists/models'
 import type { z } from 'zod'
 
+/**
+ * Safely parse a JSON string coming from the upstream API. JioSaavn sometimes
+ * returns malformed / non-JSON values for fields like `bio`, `languages` and
+ * `similar`. A raw JSON.parse here would throw and crash the whole artist
+ * response with a 500 — making the artist page render empty in production.
+ */
+const safeJsonParse = (value: unknown): any => {
+  if (typeof value !== 'string') return null
+  try {
+    return JSON.parse(value)
+  } catch {
+    return null
+  }
+}
+
 export const createArtistPayload = (artist: z.infer<typeof ArtistAPIResponseModel>): z.infer<typeof ArtistModel> => ({
   id: artist.artistId || artist.id,
   name: artist.name,
@@ -19,7 +34,7 @@ export const createArtistPayload = (artist: z.infer<typeof ArtistAPIResponseMode
   isVerified: artist.isVerified || null,
   dominantLanguage: artist.dominantLanguage || null,
   dominantType: artist.dominantType || null,
-  bio: typeof artist.bio === 'string' ? JSON.parse(artist.bio) : null,
+  bio: safeJsonParse(artist.bio),
   dob: artist.dob || null,
   fb: artist.fb || null,
   twitter: artist.twitter || null,
@@ -36,8 +51,7 @@ export const createArtistPayload = (artist: z.infer<typeof ArtistAPIResponseMode
       name: similarArtist.name,
       url: similarArtist.perma_url,
       image: createImageLinks(similarArtist.image_url),
-      languages:
-        typeof similarArtist.languages === 'string' ? JSON.parse(similarArtist.languages) : null,
+      languages: safeJsonParse(similarArtist.languages),
       wiki: similarArtist.wiki || null,
       dob: similarArtist.dob || null,
       fb: similarArtist.fb || null,
@@ -46,8 +60,8 @@ export const createArtistPayload = (artist: z.infer<typeof ArtistAPIResponseMode
       type: similarArtist.type || null,
       dominantType: similarArtist.dominantType || null,
       aka: similarArtist.aka || null,
-      bio: typeof similarArtist.bio === 'string' ? JSON.parse(similarArtist.bio) : null,
-      similarArtists: typeof similarArtist.similar === 'string' ? JSON.parse(similarArtist.similar) : null
+      bio: safeJsonParse(similarArtist.bio),
+      similarArtists: safeJsonParse(similarArtist.similar)
     })) || null
 })
 
