@@ -24,6 +24,23 @@ const safeJsonParse = (value: unknown): any => {
   }
 }
 
+/**
+ * Coerce an upstream field to an array. JioSaavn sometimes returns topSongs /
+ * topAlbums / singles / similarArtists as a nested object (e.g. { songs: [...] })
+ * or even a non-iterable value instead of a flat array — calling .map on that
+ * throws and 500s the whole artist response. This normalizes it safely.
+ */
+const ensureArray = (value: any): any[] => {
+  if (Array.isArray(value)) return value
+  if (value && typeof value === 'object') {
+    if (Array.isArray(value.songs)) return value.songs
+    if (Array.isArray(value.albums)) return value.albums
+    if (Array.isArray(value.results)) return value.results
+    if (Array.isArray(value.data)) return value.data
+  }
+  return []
+}
+
 export const createArtistPayload = (artist: z.infer<typeof ArtistAPIResponseModel>): z.infer<typeof ArtistModel> => ({
   id: artist.artistId || artist.id,
   name: artist.name,
@@ -42,11 +59,11 @@ export const createArtistPayload = (artist: z.infer<typeof ArtistAPIResponseMode
   availableLanguages: artist.availableLanguages || null,
   isRadioPresent: artist.isRadioPresent || null,
   image: createImageLinks(artist.image),
-  topSongs: artist.topSongs?.map(createSongPayload) || null,
-  topAlbums: artist.topAlbums?.map(createAlbumPayload) || null,
-  singles: artist.singles?.map(createSongPayload) || null,
+  topSongs: ensureArray(artist.topSongs).map(createSongPayload),
+  topAlbums: ensureArray(artist.topAlbums).map(createAlbumPayload),
+  singles: ensureArray(artist.singles).map(createSongPayload),
   similarArtists:
-    artist.similarArtists?.map((similarArtist) => ({
+    ensureArray(artist.similarArtists).map((similarArtist: any) => ({
       id: similarArtist.id,
       name: similarArtist.name,
       url: similarArtist.perma_url,
