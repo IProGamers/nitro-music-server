@@ -3,6 +3,7 @@ import { PlaylistController } from '#modules/playlists/controllers'
 import { App } from './app'
 import { audioProxy } from './modules/audio-proxy/audio-proxy.route'
 import { recommendations } from './modules/recommendations/recommendations.route'
+import { youtube } from './modules/youtube/youtube.route'
 
 const appInstance = new App([
   new SearchController(),
@@ -23,6 +24,9 @@ app.route('/api/audio', audioProxy)
 
 // Last.fm-powered similar-track recommendations (for the play queue / radio)
 app.route('/api/recommendations', recommendations)
+
+// YouTube Music source (dual-source: search + audio streaming proxy)
+app.route('/api/youtube', youtube)
 
 export default app
 

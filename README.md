@@ -1,3 +1,13 @@
+---
+title: Nitro Music API
+emoji: 🎵
+colorFrom: purple
+colorTo: pink
+sdk: docker
+app_port: 3000
+pinned: false
+---
+
 # JioSaavn API
 
 ![GitHub License](https://img.shields.io/github/license/sumitkolhe/jiosaavn-api)
