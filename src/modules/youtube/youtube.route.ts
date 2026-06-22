@@ -727,7 +727,17 @@ youtube.get('/health', async (c) => {
     await getInnertube()
     return c.json({ success: true, ready: true })
   } catch (err: any) {
-    return c.json({ success: false, ready: false, error: String(err?.message || err) }, 502)
+    // Surface the underlying cause so we can tell a TLS/cert failure apart from a
+    // connection reset (datacenter-IP block) vs DNS, etc.
+    const cause = err?.cause
+    return c.json({
+      success: false,
+      ready: false,
+      error: String(err?.message || err),
+      causeCode: String(cause?.code || ''),
+      causeMessage: String(cause?.message || cause || ''),
+      causeOfCause: String(cause?.cause?.code || cause?.cause?.message || '')
+    }, 502)
   }
 })
 
