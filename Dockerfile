@@ -40,6 +40,11 @@ COPY ytdlp_resolver.py ./ytdlp_resolver.py
 ENV DATABASE_URL="file:./dev.db"
 # Node already trusts Google's CA; this is just belt-and-suspenders.
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+# CRITICAL: the HF container has broken IPv6 egress. Google/YouTube hosts have
+# AAAA records, so Node tries IPv6 first and the socket resets before TLS
+# ("ECONNRESET ... before secure TLS connection was established"). jiosaavn is
+# reachable over IPv4 so it works. Force IPv4-first to fix youtubei.js.
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
 EXPOSE 3000
 

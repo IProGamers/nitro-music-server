@@ -229,13 +229,9 @@ async function doResolve(videoId: string): Promise<string | null> {
 
 // ---- Innertube singleton -------------------------------------------------
 let innertube: Innertube | null = null
-// Bun (some Linux builds) throws "unknown certificate verification error" on
-// Google's TLS while plain jiosaavn fetches succeed. Every outbound call here
-// goes to PUBLIC Google/YouTube endpoints and carries no secrets, so skip cert
-// verification per-request (more reliable than NODE_TLS_REJECT_UNAUTHORIZED,
-// which Bun doesn't always honor for fetch).
-const insecureFetch = (input: any, init?: any): Promise<Response> =>
-  fetch(input, { ...(init || {}), tls: { rejectUnauthorized: false } } as any)
+// Thin passthrough to the platform fetch. (Kept as a single seam so the YouTube/
+// stream/image calls can be adjusted in one place once we know the real HF cause.)
+const insecureFetch = (input: any, init?: any): Promise<Response> => fetch(input, init)
 
 let innertubePromise: Promise<Innertube> | null = null
 

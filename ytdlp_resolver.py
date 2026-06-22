@@ -27,6 +27,9 @@ def _make(clients):
         "skip_download": True,
         "noplaylist": True,
         "cachedir": False,
+        # Force IPv4 (== yt-dlp --force-ipv4): the HF container's IPv6 egress is
+        # broken, and YouTube/googlevideo have AAAA records, so IPv6 attempts reset.
+        "source_address": "0.0.0.0",
         "extractor_args": {"youtube": {"player_client": clients}},
     })
 
