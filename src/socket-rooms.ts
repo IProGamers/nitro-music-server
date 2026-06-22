@@ -14,6 +14,7 @@ interface Room {
     hostId: string;
     hostName: string;
     hostPhoto: string | null;
+    isPublic: boolean;
     participants: Map<string, Participant>;
     bannedUsers: Set<string>;
     currentSong: {
@@ -75,7 +76,7 @@ export const initializeSocketIO = (httpServer: HttpServer) => {
         });
 
         // Create Room
-        socket.on('room:create', (data: { userId: string; displayName: string; photoURL: string | null; tier?: string }, callback) => {
+        socket.on('room:create', (data: { userId: string; displayName: string; photoURL: string | null; tier?: string; isPublic?: boolean }, callback) => {
             try {
                 const roomId = generateRoomCode();
 
@@ -84,6 +85,7 @@ export const initializeSocketIO = (httpServer: HttpServer) => {
                     hostId: data.userId,
                     hostName: data.displayName,
                     hostPhoto: data.photoURL,
+                    isPublic: data.isPublic === true,
                     participants: new Map([[data.userId, {
                         id: data.userId,
                         displayName: data.displayName,
@@ -313,6 +315,16 @@ export const initializeSocketIO = (httpServer: HttpServer) => {
             callback({ success: true, rooms: allRooms });
         });
 
+        // List currently-active PUBLIC rooms for discovery. Private rooms are
+        // never included — they're joinable only by entering the room code.
+        socket.on('room:list_public', (callback) => {
+            if (typeof callback !== 'function') return;
+            const publicRooms = Array.from(rooms.values())
+                .filter((room) => room.isPublic === true)
+                .map(formatPublicRoom);
+            callback({ success: true, rooms: publicRooms });
+        });
+
         // Disconnect
         socket.on('disconnect', () => {
             console.log(`[Socket.io] User disconnected: ${socket.id}`);
@@ -342,12 +354,25 @@ export const initializeSocketIO = (httpServer: HttpServer) => {
         }
     };
 
+    // Helper: A lightweight summary for the public-rooms discovery list — only
+    // what the browse UI needs (host, current song, listener count). Never
+    // exposes participant details or the banned list.
+    const formatPublicRoom = (room: Room) => ({
+        id: room.id,
+        hostName: room.hostName,
+        hostPhoto: room.hostPhoto,
+        listenerCount: room.participants.size,
+        currentSong: room.currentSong,
+        isPlaying: room.isPlaying
+    });
+
     // Helper: Format room for client
     const formatRoom = (room: Room) => ({
         id: room.id,
         hostId: room.hostId,
         hostName: room.hostName,
         hostPhoto: room.hostPhoto,
+        isPublic: room.isPublic,
         participants: Array.from(room.participants.keys()),
         participantDetails: Object.fromEntries(room.participants),
         bannedUsers: Array.from(room.bannedUsers),
