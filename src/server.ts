@@ -28,5 +28,10 @@ app.route('/api/recommendations', recommendations)
 // YouTube Music source (dual-source: search + audio streaming proxy)
 app.route('/api/youtube', youtube)
 
+// Bun's default per-request idleTimeout is 10s, which can cut off a cold yt-dlp
+// stream resolution before bytes start flowing. Bun reads this off the
+// default-exported object; the Vercel/Netlify adapters ignore the extra prop.
+;(app as unknown as { idleTimeout?: number }).idleTimeout = 120
+
 export default app
 

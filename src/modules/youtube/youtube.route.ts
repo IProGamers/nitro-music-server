@@ -229,6 +229,14 @@ async function doResolve(videoId: string): Promise<string | null> {
 
 // ---- Innertube singleton -------------------------------------------------
 let innertube: Innertube | null = null
+// Bun (some Linux builds) throws "unknown certificate verification error" on
+// Google's TLS while plain jiosaavn fetches succeed. Every outbound call here
+// goes to PUBLIC Google/YouTube endpoints and carries no secrets, so skip cert
+// verification per-request (more reliable than NODE_TLS_REJECT_UNAUTHORIZED,
+// which Bun doesn't always honor for fetch).
+const insecureFetch = (input: any, init?: any): Promise<Response> =>
+  fetch(input, { ...(init || {}), tls: { rejectUnauthorized: false } } as any)
+
 let innertubePromise: Promise<Innertube> | null = null
 
 async function getInnertube(): Promise<Innertube> {
@@ -237,7 +245,8 @@ async function getInnertube(): Promise<Innertube> {
     installEvaluator()
     innertubePromise = Innertube.create({
       cache: new UniversalCache(false),
-      generate_session_locally: true
+      generate_session_locally: true,
+      fetch: insecureFetch as any
     }).then((it) => {
       innertube = it
       return it
@@ -635,13 +644,13 @@ youtube.get('/stream', async (c) => {
     if (!mediaUrl) return c.json({ success: false, message: 'could not resolve stream' }, 502)
 
     const clientRange = c.req.header('range')
-    let upstream = await fetch(mediaUrl, { headers: clientRange ? { range: clientRange } : {} })
+    let upstream = await insecureFetch(mediaUrl, { headers: clientRange ? { range: clientRange } : {} })
 
     // A cached URL can expire (403/410) — re-resolve once, bypassing the cache.
     if (upstream.status === 403 || upstream.status === 410) {
       streamUrlCache.delete(id)
       mediaUrl = await resolveStreamUrl(id)
-      if (mediaUrl) upstream = await fetch(mediaUrl, { headers: clientRange ? { range: clientRange } : {} })
+      if (mediaUrl) upstream = await insecureFetch(mediaUrl, { headers: clientRange ? { range: clientRange } : {} })
     }
 
     if (!upstream.ok && upstream.status !== 206) {
@@ -695,7 +704,7 @@ youtube.get('/image', async (c) => {
     return c.json({ success: false, message: 'forbidden host' }, 403)
   }
   try {
-    const upstream = await fetch(target.toString(), {
+    const upstream = await insecureFetch(target.toString(), {
       headers: { 'user-agent': 'Mozilla/5.0', accept: 'image/*,*/*' }
     })
     if (!upstream.ok || !upstream.body) {
