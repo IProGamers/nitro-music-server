@@ -1,5 +1,12 @@
+import dns from 'node:dns'
 import { serve } from '@hono/node-server'
 import app from './server'
+
+// HF containers have broken IPv6 egress; Google/YouTube hosts have AAAA records,
+// so Node tries IPv6 first and the socket resets before TLS ("ECONNRESET ... before
+// secure TLS connection was established"). Force IPv4-first IN CODE — the
+// NODE_OPTIONS env equivalent gets overridden by HF, this can't be.
+dns.setDefaultResultOrder('ipv4first')
 
 /**
  * Node entrypoint for the HF Space.
