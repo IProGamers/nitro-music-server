@@ -49,6 +49,13 @@ COPY ytdlp_resolver.py ./ytdlp_resolver.py
 # actually queried — but the URL must be present or construction throws.
 ENV DATABASE_URL="file:./dev.db"
 
+# Bun (this Linux build) throws "unknown certificate verification error" on
+# Google's TLS — breaking youtubei.js search/metadata AND the googlevideo audio
+# proxy — while jiosaavn fetches succeed. This backend only makes OUTBOUND calls
+# to public endpoints (YouTube, googlevideo, cover-art hosts, jiosaavn) and sends
+# no credentials, so skipping outbound cert verification is a safe, scoped trade.
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
 EXPOSE 3000
 
 CMD ["bun", "run", "start"]
