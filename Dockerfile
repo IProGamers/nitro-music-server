@@ -49,13 +49,17 @@ COPY ytdlp_resolver.py ./ytdlp_resolver.py
 # actually queried — but the URL must be present or construction throws.
 ENV DATABASE_URL="file:./dev.db"
 
-# Bun (this Linux build) throws "unknown certificate verification error" on
-# Google's TLS — breaking youtubei.js search/metadata AND the googlevideo audio
-# proxy — while jiosaavn fetches succeed. This backend only makes OUTBOUND calls
-# to public endpoints (YouTube, googlevideo, cover-art hosts, jiosaavn) and sends
-# no credentials, so skipping outbound cert verification is a safe, scoped trade.
+# Bun's built-in CA bundle can't verify Google Trust Services certs (so youtubei.js
+# + the googlevideo audio proxy fail with "unknown certificate verification error",
+# while jiosaavn's CA — already in Bun's bundle — works). Point Bun at the full
+# Debian system CA bundle (installed via ca-certificates above), which DOES include
+# the Google roots. Keep REJECT_UNAUTHORIZED=0 as a belt-and-suspenders fallback.
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
 EXPOSE 3000
 
 CMD ["bun", "run", "start"]
+
+# build trigger: per-request TLS bypass + Debian runtime
