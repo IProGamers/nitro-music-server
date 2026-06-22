@@ -24,7 +24,7 @@ WORKDIR /app
 # yt-dlp powers YouTube audio streaming (android/ios player_client → unthrottled,
 # seekable URLs). Latest from pip so the extractor stays current.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 python3-pip ca-certificates \
+    && apt-get install -y --no-install-recommends python3 python3-pip ca-certificates openssl \
     && python3 -m pip install --no-cache-dir --break-system-packages -U yt-dlp \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
