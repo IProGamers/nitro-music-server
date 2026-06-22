@@ -1,4 +1,6 @@
 import { Hono } from 'hono'
+import net from 'node:net'
+import { promises as dnsp } from 'node:dns'
 import vm from 'node:vm'
 import { execFile, spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
 import path from 'node:path'
@@ -715,6 +717,37 @@ youtube.get('/image', async (c) => {
   } catch (err: any) {
     return c.json({ success: false, message: 'image fetch failed', error: String(err?.message || err) }, 502)
   }
+})
+
+// ---- GET /api/youtube/netcheck — diagnose HF↔YouTube connectivity --------
+// Tells us whether IPv4 to YouTube actually works (→ fixable in code) or is
+// reset/blocked (→ a proxy is genuinely required). No secrets, safe to expose.
+youtube.get('/netcheck', async (c) => {
+  const out: Record<string, any> = {}
+  const host = 'www.youtube.com'
+  try { out.ipv4 = (await dnsp.resolve4(host)).slice(0, 2) } catch (e: any) { out.ipv4 = 'err:' + e?.code }
+  try { out.ipv6 = (await dnsp.resolve6(host)).slice(0, 2) } catch (e: any) { out.ipv6 = 'err:' + e?.code }
+
+  // Raw TCP connect to the first IPv4 on :443 (pure network reachability).
+  out.tcp4 = await new Promise((resolve) => {
+    const ip = Array.isArray(out.ipv4) ? out.ipv4[0] : null
+    if (!ip) return resolve('no-ipv4')
+    const s = net.connect({ host: ip, port: 443, family: 4 })
+    const t = setTimeout(() => { s.destroy(); resolve('timeout') }, 8000)
+    s.on('connect', () => { clearTimeout(t); s.destroy(); resolve('connected') })
+    s.on('error', (e: any) => { clearTimeout(t); resolve('err:' + (e?.code || e?.message)) })
+  })
+
+  // HTTPS fetch over a FORCED-IPv4 undici dispatcher (the candidate real fix).
+  try {
+    const { fetch: uf, Agent } = await import('undici')
+    const r: any = await uf('https://www.youtube.com/', {
+      dispatcher: new Agent({ connect: { family: 4, rejectUnauthorized: false, timeout: 8000 } })
+    } as any)
+    out.fetch4 = 'ok ' + r.status
+  } catch (e: any) { out.fetch4 = 'err:' + (e?.cause?.code || e?.cause?.message || e?.message) }
+
+  return c.json(out)
 })
 
 // ---- GET /api/youtube/health ---------------------------------------------
