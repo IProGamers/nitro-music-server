@@ -22,16 +22,20 @@ COPY . .
 # `prebuild` calls `npx`, which isn't present in the oven/bun image.
 RUN bunx tsc && bunx tsc-alias
 
-# Production
-FROM oven/bun:alpine AS production
+# Production — Debian (same as `base`), so the Prisma query engine generated in
+# the base stage matches the runtime. Alpine/musl would need a different engine
+# target + openssl libs, which is what crashed the previous boot.
+FROM oven/bun AS production
 
 WORKDIR /user/app
 
 # yt-dlp powers YouTube audio streaming (android/ios player_client → unthrottled,
-# seekable URLs). Install the LATEST from pip (not the Alpine package, which lags)
-# so the extractor stays current against YouTube changes for as long as possible.
-RUN apk add --no-cache python3 py3-pip ca-certificates \
-    && pip install --no-cache-dir --break-system-packages -U yt-dlp
+# seekable URLs). Install the LATEST from pip so the extractor stays current
+# against YouTube changes for as long as possible.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 python3-pip ca-certificates \
+    && python3 -m pip install --no-cache-dir --break-system-packages -U yt-dlp \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /user/app/dist ./dist
 COPY --from=base /user/app/node_modules ./node_modules
