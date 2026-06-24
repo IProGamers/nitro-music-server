@@ -342,6 +342,26 @@ const toSongPayload = (item: any) => {
   }
 }
 
+// ---- Browse/search response cache ----------------------------------------
+// YouTube search via youtubei.js is slow on this device (a home phone), and the
+// home page replays the same ~12 queries constantly (and across users). Memoize
+// the finished JSON so repeat queries are instant instead of re-hitting YouTube.
+const SEARCH_TTL = 30 * 60 * 1000 // 30 minutes
+const searchCache = new Map<string, { at: number; data: any }>()
+function getSearchCache(key: string): any | null {
+  const e = searchCache.get(key)
+  if (e && Date.now() - e.at < SEARCH_TTL) return e.data
+  if (e) searchCache.delete(key)
+  return null
+}
+function setSearchCache(key: string, data: any) {
+  searchCache.set(key, { at: Date.now(), data })
+  if (searchCache.size > 300) {
+    const oldest = searchCache.keys().next().value
+    if (oldest) searchCache.delete(oldest)
+  }
+}
+
 // ---- GET /api/youtube/search/songs ---------------------------------------
 youtube.get('/search/songs', async (c) => {
   const query = c.req.query('query') || c.req.query('q') || ''
@@ -349,6 +369,9 @@ youtube.get('/search/songs', async (c) => {
   if (!query.trim()) {
     return c.json({ success: false, message: 'query is required' }, 400)
   }
+  const cacheKey = `songs:${query.trim().toLowerCase()}:${limit}`
+  const cached = getSearchCache(cacheKey)
+  if (cached) return c.json(cached)
   try {
     const it = await getInnertube()
     const res: any = await it.music.search(query, { type: 'song' })
@@ -365,7 +388,9 @@ youtube.get('/search/songs', async (c) => {
       .map(toSongPayload)
       .filter((s: any) => s.id && s.name)
 
-    return c.json({ success: true, data: { total: results.length, start: 0, results } })
+    const payload = { success: true, data: { total: results.length, start: 0, results } }
+    if (results.length) setSearchCache(cacheKey, payload)
+    return c.json(payload)
   } catch (err: any) {
     console.error('[youtube] search failed:', err?.message || err)
     return c.json({ success: false, message: 'youtube search failed', error: String(err?.message || err) }, 502)
@@ -466,6 +491,9 @@ const searchTypeHandler = (type: 'album' | 'artist' | 'playlist', mapper: (x: an
     const query = c.req.query('query') || c.req.query('q') || ''
     const limit = Number(c.req.query('limit') || 20)
     if (!query.trim()) return c.json({ success: false, message: 'query is required' }, 400)
+    const cacheKey = `${type}:${query.trim().toLowerCase()}:${limit}`
+    const cached = getSearchCache(cacheKey)
+    if (cached) return c.json(cached)
     try {
       const it = await getInnertube()
       const res: any = await it.music.search(query, { type })
@@ -475,7 +503,9 @@ const searchTypeHandler = (type: 'album' | 'artist' | 'playlist', mapper: (x: an
         .slice(0, limit)
         .map(mapper)
         .filter((x: any) => x.id && x.name)
-      return c.json({ success: true, data: { total: results.length, start: 0, results } })
+      const payload = { success: true, data: { total: results.length, start: 0, results } }
+      if (results.length) setSearchCache(cacheKey, payload)
+      return c.json(payload)
     } catch (err: any) {
       console.error(`[youtube] search ${type} failed:`, err?.message || err)
       return c.json({ success: false, message: `youtube search ${type} failed`, data: { results: [] } }, 502)
@@ -489,6 +519,8 @@ youtube.get('/search/playlists', searchTypeHandler('playlist', playlistCard))
 // Built from a few reliable YT Music searches (mirrors how the JioSaavn home
 // is assembled) — robust vs. traversing the deeply-nested home feed.
 youtube.get('/modules', async (c) => {
+  const cachedModules = getSearchCache('modules:home')
+  if (cachedModules) return c.json(cachedModules)
   try {
     const it = await getInnertube()
     const grab = async (q: string, n: number) => {
@@ -511,7 +543,7 @@ youtube.get('/modules', async (c) => {
       grab('trending songs', 20),
       grabAlbums('new album releases', 12)
     ])
-    return c.json({
+    const payload = {
       success: true,
       data: {
         trending: { songs: trending, albums: [] },
@@ -519,7 +551,9 @@ youtube.get('/modules', async (c) => {
         charts: [],
         playlists: []
       }
-    })
+    }
+    if (trending.length || albums.length) setSearchCache('modules:home', payload)
+    return c.json(payload)
   } catch (err: any) {
     console.error('[youtube] modules failed:', err?.message || err)
     return c.json({ success: false, message: 'youtube modules failed' }, 502)
